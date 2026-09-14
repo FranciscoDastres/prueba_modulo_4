@@ -10,6 +10,8 @@
     <div class="container">
       <h1>TaskFlow</h1>
 
+      <div id="notification" class="notification" style="display: none"></div>
+
       <form id="task-form">
         <input
           type="text"
@@ -17,8 +19,19 @@
           placeholder="Título de la tarea"
           required
         />
+        <input
+          type="text"
+          id="task-desc"
+          placeholder="Descripción de la tarea"
+        />
+        <small id="char-counter">0 caracteres</small>
         <button type="submit">Agregar Tarea</button>
       </form>
+
+      <div class="timer-section">
+        <button id="start-timer-btn">Iniciar temporizador límite (10s)</button>
+        <p id="countdown"></p>
+      </div>
 
       <div class="actions">
         <button id="fetch-api-btn">Cargar tareas desde API externa</button>

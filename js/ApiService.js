@@ -1,19 +1,17 @@
 /**
- * Servicio encargado de gestionar el consumo de APIs externas usando Fetch API.
- * Encapsula la lógica de comunicación HTTP y el manejo de errores con try/catch.
+ * Servicio encargado del consumo de APIs externas usando Fetch API.
+ * Encapsula comunicación HTTP y manejo de errores con try/catch.
  */
 export class ApiService {
-  /**
-   * @param {string} baseUrl - URL base del servicio/API remota.
-   */
+  /** @param {string} baseUrl */
   constructor(baseUrl) {
     this.baseUrl = baseUrl;
   }
 
   /**
-   * Obtiene una lista de tareas remotas desde la API externa.
-   * @param {number} limit - Límite de tareas a recuperar.
-   * @returns {Promise<Array>} Arreglo de tareas recuperadas.
+   * Obtiene tareas remotas.
+   * @param {number} limit
+   * @returns {Promise<Array>}
    */
   async fetchRemoteTasks(limit = 5) {
     try {
@@ -29,28 +27,26 @@ export class ApiService {
   }
 
   /**
-   * Simula la persistencia enviando una tarea nueva mediante una petición POST.
-   * @param {Object} task - Objeto tarea a guardar.
-   * @returns {Promise<Object|null>} Respuesta de la API o null en caso de error.
+   * Simula persistencia con POST. Aplica destructuring y spread.
+   * @param {Object} task
+   * @returns {Promise<Object|null>}
    */
   async saveRemoteTask(task) {
     try {
+      // Destructuring: extrae solo lo que necesita la API
+      const { title, completed } = task;
+      const payload = { title, completed, userId: 1 };
+
       const response = await fetch(`${this.baseUrl}/todos`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: task.title,
-          completed: task.completed,
-          userId: 1,
-        }),
+        headers: { "Content-Type": "application/json" },
+        // Spread: construye el body a partir del payload
+        body: JSON.stringify({ ...payload }),
       });
 
       if (!response.ok) {
         throw new Error(`Error al guardar en la API: ${response.status}`);
       }
-
       return await response.json();
     } catch (error) {
       console.error("Error al enviar datos a la API:", error);

@@ -1,180 +1,109 @@
-# 📋 Informe Técnico: Aplicación TaskFlow
+# 📋 TaskFlow — Aplicación de Gestión de Tareas
 
-## 1. Resumen del Proyecto
-
-**TaskFlow** es una aplicación web interactiva diseñada para la gestión eficiente de tareas diarias.
-
-La aplicación fue desarrollada utilizando **JavaScript moderno (ES6+)**, aplicando conceptos de:
-
-- Programación Orientada a Objetos (POO).
-- Manipulación dinámica del DOM.
-- Gestión de eventos.
-- Programación asíncrona.
-- Consumo de APIs externas.
-- Persistencia de datos mediante `localStorage`.
+Aplicación web interactiva desarrollada con **JavaScript moderno (ES6+)** para la gestión eficiente de tareas diarias. Proyecto de evaluación del **Módulo #4: Programación Avanzada en JavaScript**.
 
 ---
 
-## 2. Arquitectura y Estructura del Código
+## 🎯 Cumplimiento de requerimientos
 
-La aplicación utiliza una arquitectura modular, separando las responsabilidades en diferentes clases y componentes.
+### 1. Orientación a Objetos ✅
 
-### 📌 `Task.js` — Modelo de Datos
+- **`Task`**: modelo con `id`, `title`, `descripcion`, `completed`, `fechaCreacion`, `fechaLimite`. Métodos: `toggleStatus()`, `updateTitle()`, `updateDescription()`, `delete()`, `getEstado()`, `getTiempoRestante()`, `toJSON()`.
+- **`TaskManager`**: administra la colección, persistencia y render. Métodos: `saveToLocalStorage()`, `loadFromLocalStorage()`, `addTaskAsync()`, `deleteTask()`, `toggleTaskStatus()`, `editTask()`, `render()`.
+- **`ApiService`**: encapsula `fetch()`, GET y POST, manejo de errores con `try/catch`.
 
-Define la entidad individual de una tarea mediante la clase `Task`.
+### 2. Características ES6+ ✅
 
-Modela las siguientes propiedades:
+- `let` / `const` en todo el código.
+- **Template literals** (`${}`) en logs y notificaciones.
+- **Arrow functions** en callbacks, `map`, `filter`, `find` y listeners.
+- **Destructuring** de objetos y parámetros:
+  - `const [title, descripcion = "", id = Date.now(), ...] = args;`
+  - `taskTitleInput.addEventListener("keyup", ({ target }) => {...})`
+  - `for (const { title, id, completed } of remoteTasks)`
+- **Spread / Rest operators**:
+  - `this.tasks = [...this.tasks, task];` (inmutable)
+  - `addTaskAsync(...args)` (rest)
+  - `addTasksFromApi(...tasks)` (rest)
+  - `JSON.stringify({ ...payload })` (spread)
 
-- `id`
-- `title`
-- `descripcion`
-- `completed`
-- `fechaCreacion`
+### 3. Eventos y Manipulación del DOM ✅
 
-Además, encapsula la lógica relacionada con el estado de cada tarea mediante métodos como:
+| Evento      | Elemento           | Función                               |
+| ----------- | ------------------ | ------------------------------------- |
+| `submit`    | `#task-form`       | Crea tarea con retardo asíncrono      |
+| `click`     | `#fetch-api-btn`   | Importa tareas de la API              |
+| `click`     | `#start-timer-btn` | Inicia contador global de 10s         |
+| `click`     | botones de tarea   | Completar / Editar / Eliminar         |
+| `keyup`     | `#task-title`      | Contador de caracteres en tiempo real |
+| `mouseover` | `#task-list`       | Aplica clase `.is-hovered`            |
+| `mouseout`  | `#task-list`       | Remueve la clase `.is-hovered`        |
 
-- `toggleStatus()`
-- `updateTitle()`
-- `getEstado()`
+### 4. JavaScript Asíncrono ✅
 
----
+- `setTimeout(1000)` → simula retardo al agregar tarea.
+- `setTimeout(2000)` → notificación diferida (requisito literal del PDF).
+- `setInterval(1000)` → **contador regresivo POR TAREA** (activo cuando la tarea tiene `fechaLimite`).
+- `setInterval(1000)` → contador global de demo (botón "Iniciar").
+- `async/await` + `try/catch` en `ApiService`.
 
-### 📌 `TaskManager.js` — Gestión de Estado y Persistencia
+### 5. Consumo de APIs + localStorage ✅
 
-La clase `TaskManager` administra la colección global de tareas y centraliza la gestión de su estado.
-
-Sus principales funcionalidades son:
-
-- Administración de tareas.
-- Persistencia mediante `localStorage`.
-- Carga de tareas almacenadas.
-- Renderizado dinámico de la lista.
-- Simulación de operaciones asíncronas.
-- Sistema de notificaciones diferidas.
-- Temporizador regresivo para tareas con fecha límite.
-
-Métodos principales:
-
-- `saveToLocalStorage()`
-- `loadFromLocalStorage()`
-- `addTaskAsync()`
-- `render()`
-
-Para la simulación de procesos asíncronos se utilizan:
-
-- `setTimeout()` para operaciones y notificaciones diferidas.
-- `setInterval()` para el funcionamiento del temporizador regresivo.
-
----
-
-### 📌 `ApiService.js` — Consumo de API Externa
-
-La clase `ApiService` se encarga de la comunicación con una API externa mediante `fetch()`.
-
-La aplicación utiliza **JSONPlaceholder** para simular operaciones con datos remotos.
-
-Principales funcionalidades:
-
-- Obtener tareas externas mediante peticiones `GET`.
-- Simular la creación de tareas mediante peticiones `POST`.
-- Manejar errores en las solicitudes HTTP.
-
-Métodos principales:
-
-- `fetchRemoteTasks()`
-- `saveRemoteTask()`
-
-El código utiliza `async/await` para trabajar con operaciones asíncronas y bloques `try/catch` para controlar posibles errores durante las solicitudes.
+- `fetch()` a **JSONPlaceholder** (`https://jsonplaceholder.typicode.com`).
+- `GET /todos?_limit=5` → obtiene tareas remotas.
+- `POST /todos` → simula guardar tarea remota.
+- `localStorage.setItem / getItem` → persistencia local.
+- Manejo de errores HTTP con `try/catch` y verificación de `response.ok`.
 
 ---
 
-### 📌 `app.js` — Controlador e Interacción
+## 🎨 Diseño e Interfaz
 
-`app.js` corresponde al punto de entrada de la aplicación y se encarga de coordinar las diferentes funcionalidades.
+Temática **bancaria profesional** inspirada en banca digital moderna (BBVA, Santander, N26).
 
-Inicializa y utiliza las instancias de:
-
-- `TaskManager`
-- `ApiService`
-
-También administra los eventos generados por el usuario.
-
-#### Eventos implementados
-
-| Evento      | Funcionalidad                                                       |
-| ----------- | ------------------------------------------------------------------- |
-| `submit`    | Procesamiento del formulario para crear tareas.                     |
-| `click`     | Activación manual del temporizador e importación de datos externos. |
-| `keyup`     | Conteo en tiempo real de caracteres ingresados.                     |
-| `mouseover` | Retroalimentación visual al pasar sobre una tarea.                  |
-| `mouseout`  | Restauración del estado visual al salir de una tarea.               |
+- **Paleta**: azul corporativo `#0a2540`, acento cian `#00b8d4`, dorado `#c9a227`.
+- **Tipografía**: [Inter](https://fonts.google.com/specimen/Inter) (estándar en fintech).
+- **Componentes**: sistema de cards, badges, botones jerárquicos (`btn-primary`, `btn-secondary`, `btn-delete`).
+- **Variables CSS**: paleta, sombras y radios centralizados en `:root`.
+- **Responsive**: layout adaptativo con breakpoint en `640px`.
+- **Contador visual**: badge por tarea que cambia a rojo al expirar.
 
 ---
 
-## 3. Cumplimiento de Requerimientos
+## 📁 Estructura del proyecto
 
-### 🧩 Orientación a Objetos
-
-La aplicación implementa Programación Orientada a Objetos mediante clases especializadas:
-
-- `Task`
-- `TaskManager`
-- `ApiService`
-
-Cada clase mantiene responsabilidades específicas y métodos relacionados con su funcionalidad.
-
----
-
-### ⚡ Características ES6+
-
-El proyecto utiliza diferentes características modernas de JavaScript, entre ellas:
-
-- `let` y `const`.
-- Arrow functions.
-- Template literals.
-- Módulos ES mediante `import/export`.
-- Promesas.
-- `async/await`.
-- Clases y métodos.
+/
+├── index.html
+├── css/
+│ └── styles.css
+└── js/
+├── app.js # Punto de entrada y controladores de eventos
+├── Task.js # Modelo (clase Task)
+├── TaskManager.js # Gestor de estado, persistencia y DOM
+└── ApiService.js # Cliente HTTP (fetch + try/catch)
 
 ---
 
-### 🌐 Manipulación del DOM y Eventos
+## 🚀 Uso
 
-La interfaz se genera y actualiza dinámicamente mediante JavaScript.
-
-Se implementa:
-
-- Creación y modificación de elementos HTML.
-- Actualización dinámica de la lista de tareas.
-- Manejo de eventos del usuario.
-- Retroalimentación visual mediante eventos del mouse.
-- Actualización de información en tiempo real.
+1. Clonar el repositorio.
+2. Abrir `index.html` en un navegador moderno (o servir con `Live Server`).
+3. Opcional: crear tarea con fecha límite → verás un contador individual en la tarea.
 
 ---
 
-### ⏱️ Asincronía y APIs
+## ✅ Entregables
 
-La aplicación incorpora diferentes mecanismos de programación asíncrona:
-
-- `async/await`.
-- `fetch()`.
-- Promesas.
-- `setTimeout()`.
-- `setInterval()`.
-
-También utiliza:
-
-- `localStorage` para persistencia local.
-- **JSONPlaceholder** para el consumo de una API externa.
-- `try/catch` para el manejo de errores en operaciones asíncronas.
+- ✅ Código fuente documentado (JSDoc en clases y métodos).
+- ✅ Demostración funcional (formulario, API, contador, eventos).
+- ✅ Informe técnico (este README + documento aparte).
 
 ---
 
-## 4. Conclusión
+## 🧰 Tecnologías
 
-**TaskFlow** integra los principales conceptos de JavaScript moderno solicitados para el desarrollo de una aplicación web interactiva.
-
-El proyecto combina **Programación Orientada a Objetos, módulos ES6+, manipulación del DOM, eventos, asincronía, persistencia local y consumo de APIs externas**, manteniendo una separación de responsabilidades entre sus principales componentes.
-
-De esta forma, la aplicación permite gestionar tareas de manera dinámica y demuestra la aplicación práctica de diferentes características fundamentales de JavaScript moderno.
+- JavaScript ES6+ (módulos, clases, async/await, destructuring, spread/rest)
+- Fetch API
+- LocalStorage
+- HTML5 semántico
+- CSS3 (variables, grid, responsive)

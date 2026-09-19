@@ -3,41 +3,98 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TaskFlow - Gestión de Tareas</title>
+    <title>TaskFlow | Gestión de Tareas</title>
     <link rel="stylesheet" href="css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div class="container">
-      <h1>TaskFlow</h1>
+    <div class="app-wrapper">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-icon">TF</div>
+          <div class="brand-text">
+            <h1>TaskFlow</h1>
+            <span>Gestión inteligente de tareas</span>
+          </div>
+        </div>
+        <div class="header-badge">Panel de control</div>
+      </header>
 
       <div id="notification" class="notification" style="display: none"></div>
 
-      <form id="task-form">
-        <input
-          type="text"
-          id="task-title"
-          placeholder="Título de la tarea"
-          required
-        />
-        <input
-          type="text"
-          id="task-desc"
-          placeholder="Descripción de la tarea"
-        />
-        <small id="char-counter">0 caracteres</small>
-        <button type="submit">Agregar Tarea</button>
-      </form>
+      <section class="card">
+        <h2 class="card-title">Nueva tarea</h2>
+        <form id="task-form">
+          <div class="form-group">
+            <label for="task-title">Título</label>
+            <input
+              type="text"
+              id="task-title"
+              placeholder="Ej: Revisar estado de cuenta"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="task-desc">Descripción</label>
+            <input
+              type="text"
+              id="task-desc"
+              placeholder="Ej: Verificar movimientos del último trimestre"
+            />
+          </div>
+          <div class="form-group">
+            <label for="task-limit"
+              >Fecha límite
+              <span class="hint">(opcional, activa contador)</span></label
+            >
+            <input type="datetime-local" id="task-limit" />
+          </div>
+          <div class="form-footer">
+            <small id="char-counter">0 caracteres</small>
+            <button type="submit" class="btn btn-primary">Agregar tarea</button>
+          </div>
+        </form>
+      </section>
 
-      <div class="timer-section">
-        <button id="start-timer-btn">Iniciar temporizador límite (10s)</button>
-        <p id="countdown"></p>
-      </div>
+      <section class="actions-panel">
+        <div class="action-card">
+          <div class="action-icon">⏱</div>
+          <div class="action-content">
+            <h3>Temporizador global (demo)</h3>
+            <p>Contador regresivo de 10 segundos</p>
+            <div class="action-row">
+              <button id="start-timer-btn" class="btn btn-secondary">
+                Iniciar (10s)
+              </button>
+              <span id="countdown" class="countdown"></span>
+            </div>
+          </div>
+        </div>
 
-      <div class="actions">
-        <button id="fetch-api-btn">Cargar tareas desde API externa</button>
-      </div>
+        <div class="action-card">
+          <div class="action-icon">☁</div>
+          <div class="action-content">
+            <h3>API externa</h3>
+            <p>
+              Importa tareas desde JSONPlaceholder (con fecha límite de 5 min)
+            </p>
+            <button id="fetch-api-btn" class="btn btn-secondary">
+              Cargar tareas
+            </button>
+          </div>
+        </div>
+      </section>
 
-      <ul id="task-list"></ul>
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Mis tareas</h2>
+          <span class="task-count" id="task-count">0 tareas</span>
+        </div>
+        <ul id="task-list" class="task-list"></ul>
+      </section>
     </div>
 
     <script type="module" src="js/app.js"></script>

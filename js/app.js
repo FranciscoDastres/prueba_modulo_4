@@ -1,77 +1,81 @@
 import { TaskManager } from "./TaskManager.js";
 import { ApiService } from "./ApiService.js";
 
-// Captura de referencias a elementos del DOM
-const taskListElement = document.getElementById("task-list");
-const taskForm = document.getElementById("task-form");
-const taskTitleInput = document.getElementById("task-title");
-const taskDescInput = document.getElementById("task-desc");
-const fetchApiBtn = document.getElementById("fetch-api-btn");
-const notificationElement = document.getElementById("notification");
-const countdownElement = document.getElementById("countdown");
-const startTimerBtn = document.getElementById("start-timer-btn");
-const charCounter = document.getElementById("char-counter");
+/* ---------- Referencias DOM ---------- */
+const taskListElement   = document.getElementById("task-list");
+const taskForm          = document.getElementById("task-form");
+const taskTitleInput    = document.getElementById("task-title");
+const taskDescInput     = document.getElementById("task-desc");
+const taskLimitInput    = document.getElementById("task-limit");
+const fetchApiBtn       = document.getElementById("fetch-api-btn");
+const notificationEl    = document.getElementById("notification");
+const countdownEl       = document.getElementById("countdown");
+const startTimerBtn     = document.getElementById("start-timer-btn");
+const charCounter       = document.getElementById("char-counter");
+const taskCountEl       = document.getElementById("task-count");
 
-// Inicialización de instancias de lógica e infraestructura
-const taskManager = new TaskManager(taskListElement, notificationElement);
-const apiService = new ApiService("https://jsonplaceholder.typicode.com");
+/* ---------- Instancias ---------- */
+const taskManager = new TaskManager(taskListElement, notificationEl);
+const apiService  = new ApiService("https://jsonplaceholder.typicode.com");
 
-// Renderizado inicial de tareas recuperadas de LocalStorage
+/* ---------- Render inicial ---------- */
 taskManager.render();
+updateTaskCount();
 
-// Captura de evento submit para el formulario de agregar tareas
+/* ---------- Formulario: submit ---------- */
 taskForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = taskTitleInput.value.trim();
-  const desc = taskDescInput.value.trim();
+  const desc  = taskDescInput.value.trim();
+  const limit = taskLimitInput.value ? new Date(taskLimitInput.value) : null;
 
-  if (title) {
-    // Agrega la tarea de forma asíncrona y la sincroniza con la API remota
-    const newTask = await taskManager.addTaskAsync(title, desc);
-    await apiService.saveRemoteTask(newTask);
+  if (!title) return;
 
-    // Limpieza de inputs
-    taskTitleInput.value = "";
-    taskDescInput.value = "";
-    if (charCounter) charCounter.textContent = "0 caracteres";
-  }
+  const newTask = await taskManager.addTaskAsync(title, desc, Date.now(), false, limit);
+  await apiService.saveRemoteTask(newTask);
+
+  taskForm.reset();
+  if (charCounter) charCounter.textContent = "0 caracteres";
+  updateTaskCount();
 });
 
-// Captura del evento keyup para medir la longitud del título ingresado en tiempo real
-taskTitleInput.addEventListener("keyup", (e) => {
-  const length = e.target.value.length;
-  if (charCounter) {
-    charCounter.textContent = `${length} caracteres`;
-  }
+/* ---------- keyup con destructuring ---------- */
+taskTitleInput.addEventListener("keyup", ({ target }) => {
+  if (charCounter) charCounter.textContent = `${target.value.length} caracteres`;
 });
 
-// Eventos de mouseover y mouseout para retroalimentación visual interactiva en la lista
+/* ---------- mouseover / mouseout con clase CSS ---------- */
 taskListElement.addEventListener("mouseover", (e) => {
-  if (e.target.tagName === "LI") {
-    e.target.style.backgroundColor = "#e9ecef";
-  }
+  const li = e.target.closest("li");
+  if (li) li.classList.add("is-hovered");
 });
-
 taskListElement.addEventListener("mouseout", (e) => {
-  if (e.target.tagName === "LI") {
-    e.target.style.backgroundColor = "transparent";
-  }
+  const li = e.target.closest("li");
+  if (li) li.classList.remove("is-hovered");
 });
 
-// Captura del evento click para sincronizar tareas externas
+/* ---------- Importar desde API con destructuring + spread ---------- */
 fetchApiBtn.addEventListener("click", async () => {
   const remoteTasks = await apiService.fetchRemoteTasks(3);
-  for (const item of remoteTasks) {
-    await taskManager.addTaskAsync(
-      item.title,
-      "Importada desde API",
-      item.id,
-      item.completed,
-    );
-  }
+
+  const mapped = remoteTasks.map(({ title, id, completed }) =>
+    // Simulamos 5 minutos de fecha límite para cada importada
+    new (await import("./Task.js")).Task(id, title, "Importada desde API", completed, new Date(), new Date(Date.now() + 5 * 60 * 1000))
+  );
+
+  taskManager.addTasksFromApi(...mapped);
+  updateTaskCount();
 });
 
-// Captura del evento click para activar el temporizador de fecha límite
+/* ---------- Contador global de demo ---------- */
 startTimerBtn.addEventListener("click", () => {
-  taskManager.startCountdown(10, countdownElement);
+  taskManager.startCountdown(10, countdownEl);
 });
+
+/* ---------- UI: contador de tareas ---------- */
+function updateTaskCount() {
+  if (taskCountEl) {
+    const n = taskManager.tasks.length;
+    taskCountEl.textContent = `${n} ${n === 1 ? "tarea" : "tareas"}`;
+  }
+}

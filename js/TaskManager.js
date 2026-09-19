@@ -1,76 +1,82 @@
 import { Task } from "./Task.js";
 
 /**
- * Clase gestora que administra el estado global de las tareas en memoria,
- * la sincronización con LocalStorage y la manipulación del DOM asociado.
+ * Gestor global de tareas: estado en memoria, LocalStorage y DOM.
  */
 export class TaskManager {
-  /**
-   * @param {HTMLElement} containerElement - Elemento HTML donde se renderizan las tareas.
-   * @param {HTMLElement} notificationElement - Elemento HTML para notificaciones emergentes.
-   */
   constructor(containerElement, notificationElement) {
     this.tasks = [];
     this.containerElement = containerElement;
     this.notificationElement = notificationElement;
-    this.countdownInterval = null;
+    this.countdownInterval = null; // contador global de demo
+    this.tickerInterval = null; // ticker de contadores por tarea
     this.loadFromLocalStorage();
+    this.startTicker();
   }
 
-  /**
-   * Guarda el estado actual de las tareas en el LocalStorage del navegador.
-   */
+  /* ---------- Persistencia ---------- */
+
   saveToLocalStorage() {
     localStorage.setItem("tasks", JSON.stringify(this.tasks));
   }
 
-  /**
-   * Recupera e instancía las tareas previamente guardadas en LocalStorage.
-   */
   loadFromLocalStorage() {
     const stored = localStorage.getItem("tasks");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Re-instanciar objetos Task para recuperar sus métodos
-      this.tasks = parsed.map(
-        (t) =>
-          new Task(t.id, t.title, t.descripcion, t.completed, t.fechaCreacion),
-      );
-    }
+    if (!stored) return;
+
+    // Destructuring + map a instancias Task
+    const parsed = JSON.parse(stored);
+    this.tasks = parsed.map(
+      ({ id, title, descripcion, completed, fechaCreacion, fechaLimite }) =>
+        new Task(id, title, descripcion, completed, fechaCreacion, fechaLimite),
+    );
   }
 
+  /* ---------- Notificaciones ---------- */
+
   /**
-   * Muestra una notificación con un retardo diferido de 2 segundos.
-   * @param {string} message - Mensaje a mostrar.
+   * Notificación diferida 2s (requisito del PDF).
+   * @param {string} message
    */
   showNotification(message) {
     setTimeout(() => {
-      if (this.notificationElement) {
-        this.notificationElement.textContent = message;
-        this.notificationElement.style.display = "block";
-
-        // Oculta la notificación automáticamente después de 3 segundos
-        setTimeout(() => {
-          this.notificationElement.style.display = "none";
-        }, 3000);
-      }
+      if (!this.notificationElement) return;
+      this.notificationElement.textContent = message;
+      this.notificationElement.style.display = "block";
+      setTimeout(() => {
+        this.notificationElement.style.display = "none";
+      }, 3000);
     }, 2000);
   }
 
+  /* ---------- Operaciones ---------- */
+
   /**
-   * Agrega una nueva tarea simulando un proceso asíncrono con retardo.
-   * @param {string} title
-   * @param {string} descripcion
-   * @param {number|string} id
-   * @param {boolean} completed
-   * @returns {Promise<Task>} Instancia de la tarea creada.
+   * Agrega una tarea simulando retardo asíncrono.
+   * Usa REST para aceptar argumentos flexibles (requisito ES6+).
+   * @returns {Promise<Task>}
    */
-  addTaskAsync(title, descripcion = "", id = Date.now(), completed = false) {
+  addTaskAsync(...args) {
+    const [
+      title,
+      descripcion = "",
+      id = Date.now(),
+      completed = false,
+      fechaLimite = null,
+    ] = args;
+
     return new Promise((resolve) => {
-      // Simulación de retardo asíncrono al guardar
       setTimeout(() => {
-        const task = new Task(id, title, descripcion, completed);
-        this.tasks.push(task);
+        const task = new Task(
+          id,
+          title,
+          descripcion,
+          completed,
+          new Date(),
+          fechaLimite,
+        );
+        // Spread: no mutamos, creamos nuevo array
+        this.tasks = [...this.tasks, task];
         this.saveToLocalStorage();
         this.render();
         this.showNotification(`Tarea "${title}" agregada exitosamente.`);
@@ -80,21 +86,34 @@ export class TaskManager {
   }
 
   /**
-   * Elimina una tarea por su ID.
-   * @param {number|string} id
+   * Agrega múltiples tareas de una sola vez (usado tras fetch a la API).
+   * Aplica rest operator.
+   * @param  {...Task} tasks
    */
-  deleteTask(id) {
-    this.tasks = this.tasks.filter((task) => task.id !== id);
+  addTasksFromApi(...tasks) {
+    this.tasks = [...this.tasks, ...tasks];
     this.saveToLocalStorage();
     this.render();
   }
 
   /**
-   * Alterna el estado de finalización de una tarea dada.
+   * Elimina una tarea por ID.
    * @param {number|string} id
    */
+  deleteTask(id) {
+    const task = this.tasks.find((t) => t.id === id);
+    if (!task) return;
+    // Encapsula la intención de eliminar en el modelo
+    if (task.delete()) {
+      this.tasks = this.tasks.filter((t) => t.id !== id);
+      this.saveToLocalStorage();
+      this.render();
+      this.showNotification(`Tarea "${task.title}" eliminada.`);
+    }
+  }
+
   toggleTaskStatus(id) {
-    const task = this.tasks.find((task) => task.id === id);
+    const task = this.tasks.find((t) => t.id === id);
     if (task) {
       task.toggleStatus();
       this.saveToLocalStorage();
@@ -102,13 +121,8 @@ export class TaskManager {
     }
   }
 
-  /**
-   * Edita el título de una tarea existente.
-   * @param {number|string} id
-   * @param {string} newTitle
-   */
   editTask(id, newTitle) {
-    const task = this.tasks.find((task) => task.id === id);
+    const task = this.tasks.find((t) => t.id === id);
     if (task && newTitle.trim() !== "") {
       task.updateTitle(newTitle);
       this.saveToLocalStorage();
@@ -116,41 +130,68 @@ export class TaskManager {
     }
   }
 
+  /* ---------- Contadores ---------- */
+
   /**
-   * Inicia un temporizador regresivo mediante setInterval para tareas con límite de tiempo.
-   * @param {number} seconds - Duración del temporizador en segundos.
-   * @param {HTMLElement} displayElement - Elemento HTML donde se proyecta la cuenta regresiva.
+   * Contador global de demo (botón "Iniciar temporizador").
+   * @param {number} seconds
+   * @param {HTMLElement} displayElement
    */
   startCountdown(seconds, displayElement) {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
     let timeRemaining = seconds;
 
     this.countdownInterval = setInterval(() => {
       if (timeRemaining <= 0) {
         clearInterval(this.countdownInterval);
-        displayElement.textContent =
-          "¡Tiempo finalizado para la tarea con fecha límite!";
+        displayElement.textContent = "¡Tiempo finalizado!";
       } else {
-        displayElement.textContent = `Tiempo restante para la meta: ${timeRemaining}s`;
+        displayElement.textContent = `${timeRemaining}s`;
         timeRemaining--;
       }
     }, 1000);
   }
 
   /**
-   * Renderiza el estado actual de las tareas de manera dinámica en el DOM.
+   * Ticker global que actualiza TODOS los contadores por tarea cada segundo.
+   * Requisito PDF: "contador regresivo para tareas con fecha límite".
    */
+  startTicker() {
+    if (this.tickerInterval) clearInterval(this.tickerInterval);
+    this.tickerInterval = setInterval(() => {
+      this.containerElement
+        .querySelectorAll("[data-countdown]")
+        .forEach((el) => {
+          const id = el.getAttribute("data-countdown");
+          const task = this.tasks.find((t) => String(t.id) === String(id));
+          if (!task) return;
+          const remaining = task.getTiempoRestante();
+          if (remaining === null) return;
+          el.textContent = this.formatRemaining(remaining);
+          el.classList.toggle("expired", remaining <= 0);
+        });
+    }, 1000);
+  }
+
+  /** @param {number} s */
+  formatRemaining(s) {
+    if (s <= 0) return "⏰ Vencida";
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `⏱ ${m}m ${sec}s` : `⏱ ${sec}s`;
+  }
+
+  /* ---------- Render ---------- */
+
   render() {
     this.containerElement.innerHTML = "";
+    const fragment = document.createDocumentFragment();
 
     this.tasks.forEach((task) => {
       const li = document.createElement("li");
-      if (task.completed) {
-        li.classList.add("completed");
-      }
+      if (task.completed) li.classList.add("completed");
 
+      // ---- Info ----
       const infoDiv = document.createElement("div");
       infoDiv.className = "task-info";
 
@@ -158,6 +199,7 @@ export class TaskManager {
       titleSpan.textContent = task.title;
 
       const statusSpan = document.createElement("small");
+      statusSpan.className = "task-status";
       statusSpan.textContent = ` [${task.getEstado()}]`;
 
       const descP = document.createElement("p");
@@ -165,14 +207,28 @@ export class TaskManager {
 
       infoDiv.append(titleSpan, statusSpan, descP);
 
+      // ---- Contador por tarea ----
+      if (task.fechaLimite) {
+        const countdown = document.createElement("span");
+        countdown.className = "task-countdown";
+        countdown.setAttribute("data-countdown", task.id);
+        const remaining = task.getTiempoRestante();
+        countdown.textContent = this.formatRemaining(remaining);
+        if (remaining <= 0) countdown.classList.add("expired");
+        infoDiv.appendChild(countdown);
+      }
+
+      // ---- Acciones ----
       const actionsDiv = document.createElement("div");
       actionsDiv.className = "task-actions";
 
       const toggleBtn = document.createElement("button");
+      toggleBtn.className = "btn btn-secondary btn-sm";
       toggleBtn.textContent = task.completed ? "Desmarcar" : "Completar";
       toggleBtn.addEventListener("click", () => this.toggleTaskStatus(task.id));
 
       const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-secondary btn-sm";
       editBtn.textContent = "Editar";
       editBtn.addEventListener("click", () => {
         const newTitle = prompt("Nuevo título:", task.title);
@@ -180,13 +236,15 @@ export class TaskManager {
       });
 
       const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-delete btn-sm";
       deleteBtn.textContent = "Eliminar";
-      deleteBtn.className = "btn-delete";
       deleteBtn.addEventListener("click", () => this.deleteTask(task.id));
 
       actionsDiv.append(toggleBtn, editBtn, deleteBtn);
       li.append(infoDiv, actionsDiv);
-      this.containerElement.appendChild(li);
+      fragment.appendChild(li);
     });
+
+    this.containerElement.appendChild(fragment);
   }
 }

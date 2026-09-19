@@ -1,96 +1,81 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f9;
-  margin: 0;
-  padding: 20px;
+/* ============================================
+   Inputs: datetime-local (coherente con text)
+   ============================================ */
+input[type="datetime-local"] {
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--surface);
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+input[type="datetime-local"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(0, 184, 212, 0.12);
+}
+.form-group .hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+/* ============================================
+   Contador por tarea
+   ============================================ */
+.task-countdown {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(0, 184, 212, 0.1);
+  border: 1px solid rgba(0, 184, 212, 0.25);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.task-countdown.expired {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+/* ============================================
+   Estado hover gestionado por JS
+   ============================================ */
+.task-list li.is-hovered {
+  border-color: var(--border-strong);
+  border-left-color: var(--gold);
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
 }
 
-.actions,
-.timer-section {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  align-items: center;
+/* ============================================
+   Botones pequeños (dentro de tareas)
+   ============================================ */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.78rem;
 }
 
-input[type="text"] {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+/* ============================================
+   Badge de estado dentro de la tarea
+   ============================================ */
+.task-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
 }
-
-button {
-  padding: 10px 15px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  transition: background-color 0.2s ease;
-}
-
-li.completed .task-info {
-  text-decoration: line-through;
-  color: #888;
-}
-
-.task-info p {
-  margin: 5px 0 0 0;
-  font-size: 0.9em;
-  color: #555;
-}
-
-.task-actions {
-  display: flex;
-  gap: 5px;
-}
-
-.btn-delete {
-  background-color: #dc3545;
-}
-
-.btn-delete:hover {
-  background-color: #bd2130;
-}
-
-.notification {
-  padding: 10px;
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
-  margin-bottom: 15px;
+.task-list li.completed .task-status {
+  color: var(--success);
 }

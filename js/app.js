@@ -1,22 +1,23 @@
 import { TaskManager } from "./TaskManager.js";
 import { ApiService } from "./ApiService.js";
+import { Task } from "./Task.js"; // 👈 Importación directa
 
 /* ---------- Referencias DOM ---------- */
-const taskListElement   = document.getElementById("task-list");
-const taskForm          = document.getElementById("task-form");
-const taskTitleInput    = document.getElementById("task-title");
-const taskDescInput     = document.getElementById("task-desc");
-const taskLimitInput    = document.getElementById("task-limit");
-const fetchApiBtn       = document.getElementById("fetch-api-btn");
-const notificationEl    = document.getElementById("notification");
-const countdownEl       = document.getElementById("countdown");
-const startTimerBtn     = document.getElementById("start-timer-btn");
-const charCounter       = document.getElementById("char-counter");
-const taskCountEl       = document.getElementById("task-count");
+const taskListElement = document.getElementById("task-list");
+const taskForm = document.getElementById("task-form");
+const taskTitleInput = document.getElementById("task-title");
+const taskDescInput = document.getElementById("task-desc");
+const taskLimitInput = document.getElementById("task-limit");
+const fetchApiBtn = document.getElementById("fetch-api-btn");
+const notificationEl = document.getElementById("notification");
+const countdownEl = document.getElementById("countdown");
+const startTimerBtn = document.getElementById("start-timer-btn");
+const charCounter = document.getElementById("char-counter");
+const taskCountEl = document.getElementById("task-count");
 
 /* ---------- Instancias ---------- */
 const taskManager = new TaskManager(taskListElement, notificationEl);
-const apiService  = new ApiService("https://jsonplaceholder.typicode.com");
+const apiService = new ApiService("https://jsonplaceholder.typicode.com");
 
 /* ---------- Render inicial ---------- */
 taskManager.render();
@@ -26,12 +27,18 @@ updateTaskCount();
 taskForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = taskTitleInput.value.trim();
-  const desc  = taskDescInput.value.trim();
+  const desc = taskDescInput.value.trim();
   const limit = taskLimitInput.value ? new Date(taskLimitInput.value) : null;
 
   if (!title) return;
 
-  const newTask = await taskManager.addTaskAsync(title, desc, Date.now(), false, limit);
+  const newTask = await taskManager.addTaskAsync(
+    title,
+    desc,
+    Date.now(),
+    false,
+    limit,
+  );
   await apiService.saveRemoteTask(newTask);
 
   taskForm.reset();
@@ -41,10 +48,11 @@ taskForm.addEventListener("submit", async (e) => {
 
 /* ---------- keyup con destructuring ---------- */
 taskTitleInput.addEventListener("keyup", ({ target }) => {
-  if (charCounter) charCounter.textContent = `${target.value.length} caracteres`;
+  if (charCounter)
+    charCounter.textContent = `${target.value.length} caracteres`;
 });
 
-/* ---------- mouseover / mouseout con clase CSS ---------- */
+/* ---------- mouseover / mouseout ---------- */
 taskListElement.addEventListener("mouseover", (e) => {
   const li = e.target.closest("li");
   if (li) li.classList.add("is-hovered");
@@ -54,13 +62,20 @@ taskListElement.addEventListener("mouseout", (e) => {
   if (li) li.classList.remove("is-hovered");
 });
 
-/* ---------- Importar desde API con destructuring + spread ---------- */
+/* ---------- Importar desde API sin await ilegal ---------- */
 fetchApiBtn.addEventListener("click", async () => {
   const remoteTasks = await apiService.fetchRemoteTasks(3);
 
-  const mapped = remoteTasks.map(({ title, id, completed }) =>
-    // Simulamos 5 minutos de fecha límite para cada importada
-    new (await import("./Task.js")).Task(id, title, "Importada desde API", completed, new Date(), new Date(Date.now() + 5 * 60 * 1000))
+  const mapped = remoteTasks.map(
+    ({ title, id, completed }) =>
+      new Task(
+        id,
+        title,
+        "Importada desde API",
+        completed,
+        new Date(),
+        new Date(Date.now() + 5 * 60 * 1000),
+      ),
   );
 
   taskManager.addTasksFromApi(...mapped);
